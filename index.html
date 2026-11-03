@@ -1,0 +1,814 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>隔天吃药•提醒</title>
+    <meta name="theme-color" content="#2EA067" />
+    <meta name="color-scheme" content="light" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="吃药提醒" />
+    <meta name="application-name" content="吃药提醒" />
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400&display=swap"
+    />
+    <link rel="stylesheet" href="hark.css" />
+    <link rel="stylesheet" href="hark-hero.css" />
+    <style>
+      body {
+        background: #f6f7fa;
+        color: #1a1d24;
+        color-scheme: light;
+      }
+      .x-app {
+        --x-green: #1f7a4b;
+        --x-orange: #f0a030;
+        --x-red: #e5484d;
+        --x-blue: #2563eb;
+        --x-ink: #1a1d24;
+        --x-grey: #6b7280;
+        --x-line: #e4e7ee;
+        width: 100%;
+        max-width: 480px;
+        margin: 0 auto;
+        display: grid;
+        gap: 16px;
+        font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC",
+          "Source Han Sans SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+        color: var(--x-ink);
+        padding-block: 8px 24px;
+      }
+      .x-top {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: start;
+        gap: 4px 12px;
+        padding: 12px 4px 4px;
+      }
+      .x-top h1 {
+        font-size: 30px;
+        line-height: 1.2;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+      }
+      .x-top__sub {
+        grid-column: 1 / -1;
+        font-size: 16px;
+        color: var(--x-grey);
+      }
+      .x-top__time {
+        grid-column: 1 / -1;
+        font-size: 13px;
+        color: var(--x-grey);
+      }
+      .x-refresh {
+        min-height: var(--tap);
+        padding: 0 16px;
+        border: 0;
+        border-radius: var(--r-pill);
+        background: var(--x-blue);
+        color: #fff;
+        font: inherit;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .x-refresh:disabled {
+        opacity: 0.6;
+        cursor: progress;
+      }
+      .x-refresh svg {
+        width: 16px;
+        height: 16px;
+      }
+      .x-refresh.is-busy svg {
+        animation: x-spin 0.9s linear infinite;
+      }
+      @keyframes x-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .x-warn {
+        font-size: 13px;
+        color: var(--x-grey);
+        padding: 0 4px;
+      }
+      .x-card {
+        background: #fff;
+        border-radius: var(--r-l);
+        padding: 22px 22px 24px;
+        border: 2px solid var(--x-line);
+        display: grid;
+        gap: 12px;
+        transition: box-shadow var(--dur-quick) var(--ease-out), border-color var(--dur-quick) var(--ease-out);
+      }
+      .x-card__label {
+        font-size: 16px;
+        color: var(--x-grey);
+      }
+      .x-card__date {
+        font-size: 34px;
+        line-height: 1.15;
+        font-weight: 700;
+      }
+      .x-card--done {
+        background: var(--x-green);
+        border-color: var(--x-green);
+        color: #fff;
+      }
+      .x-card--done .x-card__label {
+        color: #fff;
+      }
+      .x-card--due {
+        border-color: var(--x-red);
+        background: #fff5f5;
+        box-shadow: 0 6px 24px rgba(229, 72, 77, 0.18);
+      }
+      .x-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+      }
+      .x-badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 40px;
+        padding: 0 20px;
+        border-radius: var(--r-pill);
+        font-size: 16px;
+        font-weight: 700;
+      }
+      .x-badge--white {
+        background: #fff;
+        color: #1f7a4b;
+      }
+      .x-badge--soon {
+        background: #fff1d9;
+        color: #9a5a00;
+      }
+      .x-badge--due {
+        background: var(--x-red);
+        color: #fff;
+      }
+      .x-badge--late {
+        background: #fde4e5;
+        color: #b4232a;
+      }
+      .x-note {
+        font-size: 14px;
+        color: #fff;
+      }
+      .x-stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .x-stat {
+        background: #fff;
+        border-radius: var(--r-m);
+        padding: 14px 12px;
+        display: grid;
+        gap: 4px;
+        align-content: start;
+        border: 1px solid var(--x-line);
+      }
+      .x-stat__fig {
+        font-size: 24px;
+        font-weight: 700;
+        line-height: 1.2;
+      }
+      .x-stat__fig small {
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .x-stat__label {
+        font-size: 13px;
+        color: var(--x-grey);
+      }
+      .x-stat__sub {
+        font-size: 12px;
+        color: var(--x-grey);
+      }
+      .x-panel {
+        background: #fff;
+        border-radius: var(--r-l);
+        padding: 20px;
+        border: 1px solid var(--x-line);
+        display: grid;
+        gap: 14px;
+      }
+      .x-panel h2 {
+        font-size: 20px;
+        font-weight: 700;
+      }
+      .x-panel__sub {
+        font-size: 13px;
+        color: var(--x-grey);
+        margin-top: -8px;
+      }
+      .x-grid {
+        display: grid;
+        grid-template-columns: repeat(10, minmax(0, 1fr));
+        gap: 6px;
+      }
+      .x-day {
+        aspect-ratio: 1;
+        border-radius: 8px;
+        background: #eceef2;
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+        color: #4b5563;
+        position: relative;
+      }
+      .x-day--ok {
+        background: var(--x-green);
+        color: #fff;
+        font-weight: 600;
+      }
+      .x-day--late {
+        background: var(--x-orange);
+        color: #3d2600;
+        font-weight: 600;
+      }
+      .x-day--miss {
+        background: #fbd5d6;
+        color: #8f1d22;
+      }
+      .x-day--today {
+        outline: 2.5px solid var(--x-blue);
+        outline-offset: 1px;
+      }
+      .x-day--future {
+        background: transparent;
+        border: 1.5px dashed #c9ced8;
+        color: var(--x-grey);
+      }
+      .x-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+        font-size: 12px;
+        color: var(--x-grey);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .x-legend li {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .x-legend i {
+        width: 12px;
+        height: 12px;
+        border-radius: 4px;
+        display: inline-block;
+        background: #eceef2;
+      }
+      .x-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+      }
+      .x-list li {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 2px 12px;
+        padding: 12px 0;
+        border-top: 1px solid var(--x-line);
+        align-items: center;
+      }
+      .x-list li:first-child {
+        border-top: 0;
+      }
+      .x-list__date {
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .x-list__memo {
+        grid-column: 1 / -1;
+        font-size: 13px;
+        color: var(--x-grey);
+      }
+      .x-tag {
+        font-size: 13px;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: var(--r-pill);
+        background: #e3f4ea;
+        color: #1f7a4b;
+      }
+      .x-tag--late {
+        background: #fff1d9;
+        color: #9a5a00;
+      }
+      .x-howto ol,
+      .x-howto ul {
+        margin: 0;
+        padding-left: 1.3em;
+        display: grid;
+        gap: 8px;
+        font-size: 15px;
+        line-height: 1.6;
+      }
+      .x-howto b {
+        color: var(--x-ink);
+      }
+      .x-say {
+        display: inline-block;
+        background: #eaf0fe;
+        color: #1d4ed8;
+        border-radius: 8px;
+        padding: 0 6px;
+        font-weight: 600;
+      }
+      .x-panel--small {
+        background: #f0f6ff;
+        border-color: #dbe6fb;
+      }
+      .x-panel--small h2 {
+        font-size: 17px;
+      }
+      .x-checkin {
+        display: grid;
+        gap: 10px;
+        margin-top: -4px;
+      }
+      .x-big {
+        width: 100%;
+        min-height: 64px;
+        padding: 14px 20px;
+        border: 0;
+        border-radius: var(--r-l);
+        background: #2563eb;
+        color: #fff;
+        font: inherit;
+        font-size: 20px;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 6px 20px rgba(37, 99, 235, 0.25);
+        transition: background var(--dur-quick) var(--ease-out), transform var(--dur-quick) var(--ease-out);
+      }
+      .x-big:active {
+        transform: scale(0.98);
+      }
+      .x-big:disabled {
+        cursor: default;
+      }
+      .x-big.is-done {
+        background: var(--x-green);
+        box-shadow: 0 6px 20px rgba(31, 122, 75, 0.25);
+      }
+      .x-sublinks {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 4px;
+        font-size: 14px;
+        color: var(--x-grey);
+      }
+      .x-textlink {
+        min-height: var(--tap);
+        display: inline-flex;
+        align-items: center;
+        padding: 0 8px;
+        border: 0;
+        background: none;
+        font: inherit;
+        color: var(--x-grey);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+        cursor: pointer;
+      }
+      .x-confirm {
+        background: #fff;
+        border: 1px solid var(--x-line);
+        border-radius: var(--r-m);
+        padding: 16px;
+        display: grid;
+        gap: 12px;
+      }
+      .x-confirm[hidden] {
+        display: none;
+      }
+      .x-confirm__q {
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .x-confirm__btns {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .x-small {
+        min-height: var(--tap);
+        padding: 0 18px;
+        border: 1px solid var(--x-line);
+        border-radius: var(--r-pill);
+        background: #fff;
+        color: var(--x-ink);
+        font: inherit;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .x-small--primary {
+        background: #2563eb;
+        border-color: #2563eb;
+        color: #fff;
+      }
+      .x-small.is-done {
+        background: var(--x-green);
+        border-color: var(--x-green);
+      }
+      .x-date {
+        min-height: var(--tap);
+        padding: 0 12px;
+        border: 1px solid var(--x-line);
+        border-radius: var(--r-s);
+        font: inherit;
+        font-size: 16px;
+        color: var(--x-ink);
+        background: #fff;
+        flex: 1 1 160px;
+      }
+      .x-msg {
+        font-size: 13px;
+        color: var(--x-grey);
+        text-align: center;
+        padding: 0 4px;
+      }
+      .x-msg.is-warn {
+        color: #b4232a;
+        font-weight: 600;
+      }
+      .x-tag--pending {
+        background: #eaf0fe;
+        color: #1d4ed8;
+      }
+      @media (max-width: 360px) {
+        .x-card__date {
+          font-size: 29px;
+        }
+        .x-stat__fig {
+          font-size: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page" id="top">
+      <main class="x-app">
+        <header class="x-top">
+          <h1>隔天吃药•提醒</h1>
+          <button class="x-refresh" id="refresh" type="button" aria-label="刷新记录">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36" /><path d="M21 4v5h-5" /></svg>刷新
+          </button>
+          <p class="x-top__sub">每两天一次 · 饭后服用</p>
+          <p class="x-top__time" id="updated">正在读取记录…</p>
+        </header>
+
+        <p class="x-warn" id="warn" hidden>暂时连不上记录，稍后点刷新再试</p>
+
+        <section class="x-card x-card--done" aria-label="本次已吃药">
+          <p class="x-card__label">本次已吃药</p>
+          <p class="x-card__date" id="lastDate">—</p>
+          <div class="x-row">
+            <span class="x-badge x-badge--white">✓ 已完成</span>
+            <span class="x-note" id="lastDelay" hidden></span>
+          </div>
+        </section>
+
+        <section class="x-card" id="nextCard" aria-label="下次该吃药">
+          <p class="x-card__label">下次该吃药</p>
+          <p class="x-card__date" id="nextDate">—</p>
+          <div class="x-row"><span class="x-badge x-badge--soon" id="nextBadge">—</span></div>
+        </section>
+
+        <section class="x-checkin" aria-label="打卡">
+          <button class="x-big" id="takeBtn" type="button">我已吃药（点我确认）</button>
+          <div class="x-confirm" id="confirmBox" hidden>
+            <p class="x-confirm__q" id="confirmQ">确认今天已吃药？</p>
+            <div class="x-confirm__btns">
+              <button class="x-small x-small--primary" id="confirmYes" type="button">确认</button>
+              <button class="x-small" id="confirmNo" type="button">取消</button>
+            </div>
+          </div>
+          <p class="x-sublinks">
+            <button class="x-textlink" id="backfillToggle" type="button" aria-expanded="false" aria-controls="backfillBox">补记其他日期</button>
+            <span aria-hidden="true">·</span>
+            <a class="x-textlink" href="#hist" id="histLink">吃药记录</a>
+          </p>
+          <div class="x-confirm" id="backfillBox" hidden>
+            <label class="x-confirm__q" for="backfillDate">选择吃药的那一天</label>
+            <div class="x-confirm__btns">
+              <input class="x-date" type="date" id="backfillDate" />
+              <button class="x-small x-small--primary" id="backfillBtn" type="button">确认补记</button>
+            </div>
+          </div>
+          <p class="x-msg" id="sendMsg" role="status" aria-live="polite" hidden></p>
+        </section>
+
+        <section class="x-stats" aria-label="统计">
+          <div class="x-stat"><span class="x-stat__fig" id="statCount">—</span><span class="x-stat__label">累计次数</span></div>
+          <div class="x-stat"><span class="x-stat__fig" id="statRate">—</span><span class="x-stat__label">按时率</span></div>
+          <div class="x-stat"><span class="x-stat__fig" id="statDelay">—</span><span class="x-stat__label">最近一次推迟</span><span class="x-stat__sub" id="statDelaySub"></span></div>
+        </section>
+
+        <section class="x-panel" id="hist" aria-labelledby="histTitle">
+          <h2 id="histTitle">吃药记录</h2>
+          <p class="x-panel__sub">最近 30 天，每格一天</p>
+          <div class="x-grid" id="grid" role="img" aria-label="最近 30 天吃药日历"></div>
+          <ul class="x-legend">
+            <li><i style="background: #1f7a4b"></i>按时吃</li>
+            <li><i style="background: #f0a030"></i>推迟吃</li>
+            <li><i style="background: #fbd5d6"></i>该吃没吃</li>
+            <li><i></i>无需吃</li>
+            <li><i style="background: #fff; outline: 2px solid #2563eb"></i>今天</li>
+          </ul>
+          <ul class="x-list" id="list"></ul>
+        </section>
+
+        <section class="x-panel x-howto" aria-labelledby="howTitle">
+          <h2 id="howTitle">怎么记录</h2>
+          <ol>
+            <li>吃完药，点上方蓝色按钮 <b>我已吃药</b> 即可打卡。</li>
+            <li>忘了吃、改天补吃，点 <b>补记其他日期</b> 选那一天，下次自动顺延 2 天。</li>
+            <li>也可以在 Hark 聊天里说 <span class="x-say">我已吃药</span> 或 <span class="x-say">11月6日吃了</span>。</li>
+            <li>记错了，在聊天里说 <span class="x-say">撤销</span>。</li>
+          </ol>
+        </section>
+
+        <section class="x-panel x-panel--small x-howto" aria-labelledby="homeTitle">
+          <h2 id="homeTitle">添加到手机主屏幕</h2>
+          <ul>
+            <li>Chrome：点右上角 <b>⋮</b> →「添加到主屏幕」或「安装应用」。</li>
+            <li>Edge、Opera：菜单里也有类似选项。</li>
+          </ul>
+        </section>
+      </main>
+    </div>
+    <script src="hark.js"></script>
+    <script>
+      (function () {
+        var SHEET_ID = "1b0KPe-UAJ6w_kjp33w9wxJy_-hMoJixJzQZD5Zx1Fqs";
+        var FALLBACK = [{ 吃药日期: "2026-11-03", 原定日期: "2026-11-03", 推迟天数: 0, 备注: "早餐后" }];
+        var WEEK = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+        var $ = function (id) { return document.getElementById(id); };
+        var reqId = 0, timer = null, scriptEl = null;
+
+        function toDay(s) {
+          var m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(s || "");
+          return m ? Math.round(Date.UTC(+m[1], +m[2] - 1, +m[3]) / 864e5) : null;
+        }
+        function dParts(n) { var d = new Date(n * 864e5); return { m: d.getUTCMonth() + 1, d: d.getUTCDate(), w: WEEK[d.getUTCDay()] }; }
+        function fmt(n) { var p = dParts(n); return p.m + "月" + p.d + "日 " + p.w; }
+        function fmtShort(n) { var p = dParts(n); return p.m + "月" + p.d + "日"; }
+        function todayShanghai() {
+          return toDay(new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Shanghai", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()));
+        }
+        function nowHM() {
+          var p = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Shanghai", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date());
+          var h = "", m = "";
+          p.forEach(function (x) { if (x.type === "hour") h = x.value; if (x.type === "minute") m = x.value; });
+          return h.padStart(2, "0") + ":" + m.padStart(2, "0");
+        }
+        function pad(n) { return String(n).padStart(2, "0"); }
+        function cellVal(c) {
+          if (!c || c.v == null) return "";
+          var v = c.v;
+          if (typeof v === "string") {
+            var g = /^Date\((\d+),(\d+),(\d+)/.exec(v);
+            if (g) return g[1] + "-" + pad(+g[2] + 1) + "-" + pad(+g[3]);
+            return v.trim();
+          }
+          return v;
+        }
+
+        function parse(resp) {
+          var t = resp && resp.table;
+          if (!t || !t.cols) throw new Error("bad");
+          var rows = (t.rows || []).map(function (r) { return (r.c || []).map(cellVal); });
+          var labels = t.cols.map(function (c) { return (c.label || "").trim(); });
+          if (labels.every(function (l) { return !l; })) labels = (rows.shift() || []).map(function (x) { return String(x).trim(); });
+          return rows.map(function (r) {
+            var o = {};
+            labels.forEach(function (l, i) { o[l] = r[i]; });
+            return o;
+          });
+        }
+
+        function normalize(list) {
+          return list
+            .map(function (o) {
+              var took = toDay(String(o["吃药日期"] || ""));
+              if (took == null) return null;
+              var plan = toDay(String(o["原定日期"] || ""));
+              var raw = o["推迟天数"], delay = parseInt(raw, 10);
+              if (isNaN(delay)) delay = plan != null ? Math.max(0, took - plan) : 0;
+              if (plan == null) plan = took - delay;
+              return { took: took, plan: plan, delay: Math.max(0, delay), memo: String(o["备注"] || "") };
+            })
+            .filter(Boolean)
+            .sort(function (a, b) { return a.took - b.took; });
+        }
+
+        function render(recs) {
+          var today = todayShanghai();
+          if (!recs.length) recs = normalize(FALLBACK);
+          var last = recs[recs.length - 1];
+          var next = last.took + 2;
+          var diff = next - today;
+
+          $("lastDate").textContent = fmt(last.took);
+          var ld = $("lastDelay");
+          if (last.delay > 0) { ld.textContent = "推迟 " + last.delay + " 天"; ld.hidden = false; } else ld.hidden = true;
+
+          $("nextDate").textContent = fmt(next);
+          var badge = $("nextBadge"), card = $("nextCard");
+          card.classList.toggle("x-card--due", diff <= 0);
+          if (diff >= 1) { badge.className = "x-badge x-badge--soon"; badge.textContent = "还有 " + diff + " 天"; }
+          else if (diff === 0) { badge.className = "x-badge x-badge--due"; badge.textContent = "今天该吃药"; }
+          else { badge.className = "x-badge x-badge--late"; badge.textContent = "已逾期 " + -diff + " 天"; }
+
+          var onTime = recs.filter(function (r) { return r.delay === 0; }).length;
+          $("statCount").innerHTML = recs.length + "<small> 次</small>";
+          $("statRate").textContent = Math.round((onTime / recs.length) * 100) + "%";
+          var lastLate = recs.slice().reverse().find(function (r) { return r.delay > 0; });
+          if (lastLate) {
+            $("statDelay").innerHTML = lastLate.delay + "<small> 天</small>";
+            $("statDelaySub").textContent = fmtShort(lastLate.took);
+          } else {
+            $("statDelay").textContent = "无";
+            $("statDelaySub").textContent = "";
+          }
+
+          // calendar: last 30 days ending today
+          var taken = {}, missed = {};
+          recs.forEach(function (r) {
+            taken[r.took] = r;
+            for (var d = r.plan; d < r.took; d++) missed[d] = true;
+          });
+          for (var d = next; d < today; d++) missed[d] = true;
+          var grid = $("grid"), html = "", ok = 0, late = 0, miss = 0;
+          for (var i = 29; i >= 0; i--) {
+            var day = today - i, cls = "x-day", r = taken[day], tip;
+            if (r) { cls += r.delay ? " x-day--late" : " x-day--ok"; tip = r.delay ? "推迟 " + r.delay + " 天吃" : "按时吃"; r.delay ? late++ : ok++; }
+            else if (missed[day]) { cls += " x-day--miss"; tip = "该吃没吃"; miss++; }
+            else tip = "无需吃";
+            if (day === today) cls += " x-day--today";
+            html += '<span class="' + cls + '" title="' + fmt(day) + " · " + tip + '">' + dParts(day).d + "</span>";
+          }
+          grid.innerHTML = html;
+          grid.setAttribute("aria-label", "最近 30 天：按时吃 " + ok + " 天，推迟吃 " + late + " 天，该吃没吃 " + miss + " 天");
+
+          $("list").innerHTML = recs
+            .slice()
+            .reverse()
+            .map(function (r) {
+              var tag = r.delay ? '<span class="x-tag x-tag--late">推迟 ' + r.delay + " 天</span>" : '<span class="x-tag">按时</span>';
+              var memo = r.memo ? '<span class="x-list__memo">' + esc(r.memo) + "</span>" : "";
+              return '<li><span class="x-list__date">' + fmt(r.took) + "</span>" + tag + memo + "</li>";
+            })
+            .join("");
+        }
+        function esc(s) { return s.replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+        function finish(recs, failed) {
+          clearTimeout(timer);
+          if (scriptEl) { scriptEl.remove(); scriptEl = null; }
+          $("warn").hidden = !failed;
+          if (!failed) pending = pending.filter(function (p) { return !recs.some(function (r) { return r.took === p.took; }); });
+          var extra = pending.filter(function (p) { return !recs.some(function (r) { return r.took === p.took; }); });
+          current = recs.concat(extra).sort(function (a, b) { return a.took - b.took; });
+          render(current);
+          $("updated").textContent = "更新于 " + nowHM();
+          var b = $("refresh"); b.disabled = false; b.classList.remove("is-busy");
+        }
+
+        function load() {
+          var id = ++reqId;
+          var b = $("refresh"); b.disabled = true; b.classList.add("is-busy");
+          clearTimeout(timer);
+          if (scriptEl) scriptEl.remove();
+          window.onPillData = function (resp) {
+            if (id !== reqId) return;
+            try {
+              if (resp && resp.status === "error") throw new Error("sheet");
+              finish(normalize(parse(resp)), false);
+            } catch (e) { finish(normalize(FALLBACK), true); }
+          };
+          var s = document.createElement("script");
+          s.src = "https://docs.google.com/spreadsheets/d/" + SHEET_ID + "/gviz/tq?tqx=out:json;responseHandler:onPillData&headers=1&sheet=%E8%AE%B0%E5%BD%95&_=" + Date.now();
+          s.onerror = function () { if (id === reqId) finish(normalize(FALLBACK), true); };
+          timer = setTimeout(function () { if (id === reqId) { reqId++; finish(normalize(FALLBACK), true); } }, 12000);
+          scriptEl = s;
+          document.body.appendChild(s);
+        }
+
+        // ---- check-in ----
+        var FORM = "https://docs.google.com/forms/d/e/1FAIpQLScgZdWoRNuxcYrY8sDQHpaQFb5GnsPnXYd2NgZajd0w5s37gA/formResponse?entry.1369351157=";
+        var pending = [], current = normalize(FALLBACK);
+        var pings = [];
+        function iso(n) { var d = new Date(n * 864e5); return d.getUTCFullYear() + "-" + pad(d.getUTCMonth() + 1) + "-" + pad(d.getUTCDate()); }
+        function showMsg(text, warn) {
+          var m = $("sendMsg");
+          m.textContent = text;
+          m.classList.toggle("is-warn", !!warn);
+          m.hidden = false;
+        }
+        function send(day, btn, label) {
+          if (current.some(function (r) { return r.took === day; })) { showMsg("这一天已经记过了", true); return; }
+          var url = FORM + encodeURIComponent(iso(day)) + "&submit=Submit&_=" + Date.now();
+          var sent = false;
+          try {
+            var img = new Image();
+            img.onload = img.onerror = function () { pings.splice(pings.indexOf(img), 1); };
+            pings.push(img);
+            img.src = url;
+            sent = true;
+          } catch (e) {}
+          try {
+            if (window.fetch) { fetch(url, { mode: "no-cors" }).catch(function () {}); sent = true; }
+          } catch (e) {}
+          if (!sent) { showMsg("发送失败，请稍后再试，或在 Hark 聊天里说「我已吃药」", true); return; }
+
+          var last = current.length ? current[current.length - 1] : null;
+          var plan = last ? last.took + 2 : day;
+          var rec = { took: day, plan: plan, delay: Math.max(0, day - plan), memo: "待同步", pending: true };
+          pending.push(rec);
+          current = current.concat([rec]).sort(function (a, b) { return a.took - b.took; });
+          render(current);
+          showMsg("已发送。Hark 每小时同步一次到记录表格，同步后其他地方也会更新。", false);
+
+          btn.textContent = "✓ 已记录";
+          btn.classList.add("is-done");
+          btn.disabled = true;
+          setTimeout(function () {
+            btn.textContent = label;
+            btn.classList.remove("is-done");
+            btn.disabled = false;
+          }, 3000);
+        }
+
+        var takeBtn = $("takeBtn"), box = $("confirmBox");
+        takeBtn.addEventListener("click", function () {
+          if (takeBtn.disabled) return;
+          var t = todayShanghai();
+          if (current.some(function (r) { return r.took === t; })) { showMsg("这一天已经记过了", true); return; }
+          $("confirmQ").textContent = "确认今天（" + fmt(t) + "）已吃药？";
+          box.hidden = false;
+          $("confirmYes").focus();
+        });
+        $("confirmNo").addEventListener("click", function () { box.hidden = true; takeBtn.focus(); });
+        $("confirmYes").addEventListener("click", function () {
+          box.hidden = true;
+          send(todayShanghai(), takeBtn, "我已吃药（点我确认）");
+        });
+
+        var bfBox = $("backfillBox"), bfToggle = $("backfillToggle"), bfDate = $("backfillDate"), bfBtn = $("backfillBtn");
+        bfToggle.addEventListener("click", function () {
+          var open = bfBox.hidden;
+          bfBox.hidden = !open;
+          bfToggle.setAttribute("aria-expanded", String(open));
+          if (open) {
+            var t = iso(todayShanghai());
+            bfDate.max = t;
+            if (!bfDate.value || bfDate.value > t) bfDate.value = t;
+            bfDate.focus();
+          }
+        });
+        bfBtn.addEventListener("click", function () {
+          if (bfBtn.disabled) return;
+          var day = toDay(bfDate.value), t = todayShanghai();
+          if (day == null) { showMsg("请先选择日期", true); return; }
+          if (day > t) { showMsg("不能补记未来的日期", true); return; }
+          send(day, bfBtn, "确认补记");
+        });
+
+        $("histLink").addEventListener("click", function (e) {
+          e.preventDefault();
+          $("hist").scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+
+        $("refresh").addEventListener("click", load);
+        load();
+      })();
+    </script>
+  </body>
+</html>
