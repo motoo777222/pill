@@ -206,7 +206,7 @@ input:focus{outline:none;border-color:var(--g2)}
     var nc=$('nextCard'),pending=doses.filter(function(d){return !log[doseKey(today,d.mi,d.t)];});
     var late=pending.filter(function(d){return d.t<=hm;}), up=pending.filter(function(d){return d.t>hm;});
     if(late.length){nc.style.background='var(--red)';
-      nc.innerHTML='<div class="hint">现在该吃</div><div class="big">'+late.map(function(d){return esc(d.m.name);}).join('、')+'</div><div class="hint">吃完点下面的“已吃”</div>';}
+      nc.innerHTML='<div class="hint">现在该吃</div><div class="big">'+late.map(function(d){return esc(d.m.name);}).filter(function(v,i,a){return a.indexOf(v)===i;}).join('、')+'</div><div class="hint">吃完点下面的“已吃”</div>';}
     else if(up.length){nc.style.background='';
       nc.innerHTML='<div class="hint">下一次吃药</div><div class="big">'+up[0].t+'</div><div class="hint">'+esc(up[0].m.name)+'</div>';}
     else{nc.style.background='';
