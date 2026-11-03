@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>提醒吃药•通用版</title>
+<meta name="theme-color" content="#2EA067" />
+<meta name="color-scheme" content="light" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="吃药提醒" />
+<meta name="application-name" content="吃药提醒" />
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="manifest" href="manifest.webmanifest" />
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--g:#1f7a4b;--g2:#2ea067;--red:#e5484d;--org:#f0a030;--ink:#1a1d24;--grey:#6b7280;--line:#e4e7ee;--bg:#f6f7fa}
+html,body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Noto Sans CJK SC","Microsoft YaHei","Segoe UI",sans-serif;font-size:18px;line-height:1.5;-webkit-text-size-adjust:100%}
+.app{max-width:480px;margin:0 auto;padding:16px 16px calc(32px + env(safe-area-inset-bottom));display:grid;gap:16px}
+h1{font-size:30px;font-weight:700;line-height:1.2}
+.sub{color:var(--grey);font-size:16px}
+.card{background:#fff;border:2px solid var(--line);border-radius:20px;padding:20px;display:grid;gap:14px}
+.card h2{font-size:22px}
+.label{font-size:17px;font-weight:600}
+.hint{font-size:15px;color:var(--grey)}
+input[type=text],input[type=date],input[type=time]{width:100%;min-height:56px;font:inherit;font-size:20px;padding:0 14px;border:2px solid var(--line);border-radius:14px;background:#fff;color:var(--ink)}
+input:focus{outline:none;border-color:var(--g2)}
+.seg{display:flex;gap:10px;flex-wrap:wrap}
+.seg button{flex:1;min-width:64px;min-height:56px;font:inherit;font-size:20px;font-weight:600;border:2px solid var(--line);background:#fff;border-radius:14px;color:var(--ink);cursor:pointer}
+.seg button.on{background:var(--g2);border-color:var(--g2);color:#fff}
+.times{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{min-height:60px;width:100%;font:inherit;font-size:21px;font-weight:700;border:0;border-radius:16px;background:var(--g2);color:#fff;cursor:pointer}
+.btn.ghost{background:#fff;color:var(--g);border:2px solid var(--g2)}
+.btn.small{min-height:48px;font-size:17px}
+.link{background:none;border:0;font:inherit;font-size:17px;color:#2563eb;cursor:pointer;text-decoration:underline;padding:4px 0;text-align:left}
+.danger{color:var(--red)}
+.next{background:var(--g);color:#fff;border:0}
+.next .big{font-size:40px;font-weight:700;line-height:1.1}
+.next .hint{color:#e6f4ec}
+.dose{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;padding:14px;border:2px solid var(--line);border-radius:16px}
+.dose .t{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums}
+.dose .n{font-size:19px;font-weight:600;word-break:break-all}
+.dose .s{font-size:15px;color:var(--grey)}
+.dose button{min-height:52px;padding:0 18px;font:inherit;font-size:19px;font-weight:700;border:0;border-radius:14px;background:var(--g2);color:#fff;cursor:pointer}
+.dose.done{background:#eaf6ef;border-color:#bfe3cd}
+.dose.done button{background:#fff;color:var(--g);border:2px solid #bfe3cd;font-size:16px}
+.dose.due{border-color:var(--red);background:#fff5f5}
+.dose.due .s{color:var(--red);font-weight:600}
+.off{padding:14px;border-radius:16px;background:#f1f3f7;font-size:18px}
+.med{border:2px solid var(--line);border-radius:16px;padding:16px;display:grid;gap:12px}
+.medhead{display:flex;justify-content:space-between;align-items:center}
+.medhead b{font-size:19px}
+.steps{padding-left:22px;font-size:16px;display:grid;gap:4px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#1a1d24;color:#fff;padding:12px 20px;border-radius:999px;font-size:16px;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%;text-align:center}
+.toast.show{opacity:1}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>提醒吃药•通用版</h1>
+    <div class="sub" id="today"></div>
+  </header>
+
+  <!-- 设置 -->
+  <section id="setup" class="hide">
+    <div class="card">
+      <h2>设置吃药方式</h2>
+      <div class="hint">填好点“保存”就行，以后随时能改。</div>
+      <div id="meds"></div>
+      <button class="link" id="addMed">＋ 再加一种药</button>
+      <button class="btn" id="save">保存</button>
+      <button class="link hide" id="cancelSetup">不改了，返回</button>
+    </div>
+  </section>
+
+  <!-- 主页 -->
+  <section id="home" class="hide" style="display:grid;gap:16px">
+    <div class="card next" id="nextCard"></div>
+    <div class="card">
+      <h2>今天要吃的药</h2>
+      <div id="list" style="display:grid;gap:10px"></div>
+    </div>
+    <div class="card">
+      <h2>准时响铃提醒</h2>
+      <div class="hint">网页关着时没法自己响，加进手机日历后，到点就会响。改了设置要重新加一次。</div>
+      <button class="btn" id="icsBtn">苹果手机：加到日历</button>
+      <button class="btn ghost" id="gcalBtn">安卓手机：加到谷歌日历</button>
+      <div id="gcalLinks" class="hide" style="display:grid;gap:8px"></div>
+      <button class="btn ghost small" id="notifBtn">网页开着时也弹窗提醒</button>
+    </div>
+    <div class="card">
+      <h2>放到手机桌面</h2>
+      <ol class="steps">
+        <li>用 Chrome、Edge、Brave、Firefox 或 Safari 打开本页</li>
+        <li>点浏览器菜单（⋮ 或 分享按钮）</li>
+        <li>选“添加到主屏幕”</li>
+      </ol>
+      <div style="display:flex;gap:10px">
+        <button class="btn ghost small" id="editBtn">修改设置</button>
+        <button class="btn ghost small" id="shareBtn">分享给朋友</button>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  var KEY_CFG='pillGeneral.cfg', KEY_LOG='pillGeneral.log';
+  var DEFAULT_TIMES={1:['08:00'],2:['08:00','20:00'],3:['08:00','13:00','19:00'],4:['08:00','12:00','17:00','21:00']};
+  var WEEK=['日','一','二','三','四','五','六'];
+  var mem={}, canStore=true;
+  try{localStorage.setItem('__t','1');localStorage.removeItem('__t');}catch(e){canStore=false;}
+  function load(k,d){try{var v=canStore?localStorage.getItem(k):mem[k];return v?JSON.parse(v):d;}catch(e){return d;}}
+  function store(k,v){var s=JSON.stringify(v);if(canStore){try{localStorage.setItem(k,s);return;}catch(e){}}mem[k]=s;}
+  function $(id){return document.getElementById(id);}
+  function pad(n){return (n<10?'0':'')+n;}
+  function ymd(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+  function parseYmd(s){var p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2]);}
+  function dayDiff(a,b){return Math.round((parseYmd(ymd(b))-parseYmd(ymd(a)))/86400000);}
+  function toast(t){var el=$('toast');el.textContent=t;el.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(function(){el.classList.remove('show');},2200);}
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+
+  var cfg=load(KEY_CFG,null), log=load(KEY_LOG,{});
+  var draft=[];
+
+  function newMed(){return {name:'',every:1,count:1,times:DEFAULT_TIMES[1].slice(),start:ymd(new Date())};}
+  function takesOn(m,d){var diff=dayDiff(parseYmd(m.start),d);return diff>=0&&diff%m.every===0;}
+  function nextDay(m,from){for(var i=0;i<400;i++){var d=new Date(from.getFullYear(),from.getMonth(),from.getDate()+i);if(takesOn(m,d))return d;}return null;}
+  function fmtDay(d){return ymd(d)+'（周'+WEEK[d.getDay()]+'）';}
+
+  /* ---------- 设置 ---------- */
+  function renderSetup(){
+    var box=$('meds');box.innerHTML='';
+    draft.forEach(function(m,i){
+      var div=document.createElement('div');div.className='med';
+      var h='<div class="medhead"><b>药 '+(i+1)+'</b>'+(draft.length>1?'<button class="link danger" data-del="'+i+'">删除</button>':'')+'</div>'+
+        '<div class="label">药名</div><input type="text" data-k="name" data-i="'+i+'" placeholder="比如：降压药" value="'+esc(m.name)+'">'+
+        '<div class="label">怎么吃</div><div class="seg">'+
+          '<button data-every="1" data-i="'+i+'" class="'+(m.every===1?'on':'')+'">每天</button>'+
+          '<button data-every="2" data-i="'+i+'" class="'+(m.every===2?'on':'')+'">隔天</button></div>'+
+        '<div class="label">一天几次</div><div class="seg">';
+      [1,2,3,4].forEach(function(c){h+='<button data-count="'+c+'" data-i="'+i+'" class="'+(m.count===c?'on':'')+'">'+c+' 次</button>';});
+      h+='</div><div class="label">吃药时间</div><div class="hint">已按次数排好，可以点开改。</div><div class="times">';
+      m.times.forEach(function(t,j){h+='<input type="time" step="60" data-time="'+j+'" data-i="'+i+'" value="'+t+'">';});
+      h+='</div>';
+      if(m.every===2){h+='<div class="label">哪天开始吃</div><div class="hint">隔天吃的药，从这天算起。</div><input type="date" data-k="start" data-i="'+i+'" value="'+m.start+'">';}
+      div.innerHTML=h;box.appendChild(div);
+    });
+  }
+  $('meds').addEventListener('click',function(e){
+    var b=e.target.closest('button');if(!b)return;var i=+b.dataset.i;
+    if(b.dataset.every){draft[i].every=+b.dataset.every;renderSetup();}
+    else if(b.dataset.count){var c=+b.dataset.count;draft[i].count=c;draft[i].times=DEFAULT_TIMES[c].slice();renderSetup();}
+    else if(b.dataset.del){draft.splice(+b.dataset.del,1);renderSetup();}
+  });
+  $('meds').addEventListener('input',function(e){
+    var el=e.target,i=+el.dataset.i;if(isNaN(i))return;
+    if(el.dataset.k)draft[i][el.dataset.k]=el.value;
+    if(el.dataset.time!==undefined&&el.value)draft[i].times[+el.dataset.time]=el.value;
+  });
+  $('addMed').onclick=function(){draft.push(newMed());renderSetup();};
+  $('save').onclick=function(){
+    for(var i=0;i<draft.length;i++){
+      if(!draft[i].name.trim()){toast('请填药 '+(i+1)+' 的药名');return;}
+      draft[i].name=draft[i].name.trim();
+      draft[i].times=draft[i].times.slice().sort();
+      if(!draft[i].start)draft[i].start=ymd(new Date());
+      if(draft[i].every===1)draft[i].start=draft[i].start||ymd(new Date());
+    }
+    cfg={meds:draft,v:1};store(KEY_CFG,cfg);
+    toast(canStore?'已保存':'已保存（这个浏览器不让存，关掉就没了）');
+    show('home');
+  };
+  $('cancelSetup').onclick=function(){show('home');};
+
+  /* ---------- 主页 ---------- */
+  function doseKey(date,mi,t){return date+'|'+cfg.meds[mi].name+'|'+t;}
+  function todayDoses(){
+    var now=new Date(),out=[];
+    cfg.meds.forEach(function(m,mi){if(takesOn(m,now))m.times.forEach(function(t){out.push({mi:mi,m:m,t:t});});});
+    out.sort(function(a,b){return a.t<b.t?-1:a.t>b.t?1:0;});return out;
+  }
+  function nowHM(){var d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes());}
+  function renderHome(){
+    var now=new Date(),today=ymd(now),hm=nowHM();
+    var doses=todayDoses(),list=$('list');list.innerHTML='';
+    if(!doses.length){list.innerHTML='<div class="off">今天不用吃药。</div>';}
+    doses.forEach(function(d){
+      var k=doseKey(today,d.mi,d.t),done=!!log[k];
+      var due=!done&&d.t<=hm;
+      var div=document.createElement('div');div.className='dose'+(done?' done':due?' due':'');
+      div.innerHTML='<div class="t">'+d.t+'</div><div><div class="n">'+esc(d.m.name)+'</div><div class="s">'+
+        (done?'已吃 '+log[k]:due?'到点了，该吃了':'还没到时间')+'</div></div>'+
+        '<button data-k="'+esc(k)+'">'+(done?'撤销':'已吃')+'</button>';
+      list.appendChild(div);
+    });
+    cfg.meds.forEach(function(m){
+      if(!takesOn(m,now)){var nd=nextDay(m,now);var div=document.createElement('div');div.className='off';
+        div.textContent=m.name+'：今天不吃，下次 '+(nd?ymd(nd):'')+' '+m.times[0];list.appendChild(div);}
+    });
+    // 下一次
+    var nc=$('nextCard'),pending=doses.filter(function(d){return !log[doseKey(today,d.mi,d.t)];});
+    var late=pending.filter(function(d){return d.t<=hm;}), up=pending.filter(function(d){return d.t>hm;});
+    if(late.length){nc.style.background='var(--red)';
+      nc.innerHTML='<div class="hint">现在该吃</div><div class="big">'+late.map(function(d){return esc(d.m.name);}).join('、')+'</div><div class="hint">吃完点下面的“已吃”</div>';}
+    else if(up.length){nc.style.background='';
+      nc.innerHTML='<div class="hint">下一次吃药</div><div class="big">'+up[0].t+'</div><div class="hint">'+esc(up[0].m.name)+'</div>';}
+    else{nc.style.background='';
+      var best=null;cfg.meds.forEach(function(m){var nd=nextDay(m,new Date(now.getFullYear(),now.getMonth(),now.getDate()+1));if(nd){var s=ymd(nd)+' '+m.times[0];if(!best||s<best.s)best={s:s,m:m,d:nd};}});
+      nc.innerHTML='<div class="hint">'+(doses.length?'今天的药都吃完了 ✓':'今天不用吃药')+'</div>'+
+        (best?'<div class="big">'+best.m.times[0]+'</div><div class="hint">下次：'+fmtDay(best.d)+' '+esc(best.m.name)+'</div>':'');}
+  }
+  $('list').addEventListener('click',function(e){
+    var b=e.target.closest('button');if(!b)return;var k=b.dataset.k;
+    if(log[k]){delete log[k];toast('已撤销');}else{log[k]=nowHM();toast('好的，记下了 ✓');}
+    // 只留最近 60 天
+    var cut=ymd(new Date(Date.now()-60*86400000));Object.keys(log).forEach(function(x){if(x.split('|')[0]<cut)delete log[x];});
+    store(KEY_LOG,log);renderHome();
+  });
+
+  /* ---------- 日历 ---------- */
+  function icsDate(dateStr,t){return dateStr.replace(/-/g,'')+'T'+t.replace(':','')+'00';}
+  function firstDate(m){var s=parseYmd(m.start),t=new Date();t=new Date(t.getFullYear(),t.getMonth(),t.getDate());
+    if(s>=t)return m.start;var d=nextDay(m,t);return ymd(d);}
+  function icsEsc(s){return s.replace(/[\\;,]/g,function(c){return '\\'+c;});}
+  $('icsBtn').onclick=function(){
+    var st=new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+    var L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//pill-general//CN','CALSCALE:GREGORIAN','METHOD:PUBLISH'];
+    cfg.meds.forEach(function(m,mi){m.times.forEach(function(t,ti){
+      var d=firstDate(m);
+      L.push('BEGIN:VEVENT','UID:pill-'+Date.now()+'-'+mi+'-'+ti+'@pill-general','DTSTAMP:'+st,
+        'DTSTART:'+icsDate(d,t),'DURATION:PT10M','RRULE:FREQ=DAILY;INTERVAL='+m.every,
+        'SUMMARY:'+icsEsc('吃药：'+m.name),'DESCRIPTION:'+icsEsc('吃完记得在“提醒吃药”里点已吃'),
+        'BEGIN:VALARM','ACTION:DISPLAY','TRIGGER:PT0M','DESCRIPTION:'+icsEsc('该吃'+m.name+'了'),'END:VALARM','END:VEVENT');
+    });});
+    L.push('END:VCALENDAR');
+    var data='data:text/calendar;charset=utf-8,'+encodeURIComponent(L.join('\r\n'));
+    var a=document.createElement('a');a.href=data;a.download='吃药提醒.ics';document.body.appendChild(a);a.click();a.remove();
+    toast('打开后点“全部添加”');
+  };
+  $('gcalBtn').onclick=function(){
+    var box=$('gcalLinks'),tz=(Intl.DateTimeFormat().resolvedOptions().timeZone)||'';box.innerHTML='';
+    cfg.meds.forEach(function(m){m.times.forEach(function(t){
+      var d=firstDate(m),s=icsDate(d,t);var endD=new Date(parseYmd(d).getTime());var p=t.split(':');endD.setHours(+p[0],+p[1]+10);
+      var e=ymd(endD).replace(/-/g,'')+'T'+pad(endD.getHours())+pad(endD.getMinutes())+'00';
+      var url='https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent('吃药：'+m.name)+
+        '&dates='+s+'/'+e+'&recur='+encodeURIComponent('RRULE:FREQ=DAILY;INTERVAL='+m.every)+(tz?'&ctz='+encodeURIComponent(tz):'')+
+        '&details='+encodeURIComponent('提醒时间请设为“活动开始时”');
+      var a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.className='btn ghost small';
+      a.style.cssText='display:flex;align-items:center;justify-content:center;text-decoration:none';
+      a.textContent=t+' '+m.name+'（'+(m.every===2?'隔天':'每天')+'）';box.appendChild(a);
+    });});
+    box.insertAdjacentHTML('afterbegin','<div class="hint">每个时间点一次，逐个点开保存。保存前把“通知”改成“活动开始时”。</div>');
+    box.classList.remove('hide');
+  };
+
+  /* ---------- 网页提醒 ---------- */
+  var fired={};
+  function beep(){try{var C=window.AudioContext||window.webkitAudioContext,c=new C();[0,0.35,0.7].forEach(function(o){var g=c.createGain(),os=c.createOscillator();os.frequency.value=880;os.connect(g);g.connect(c.destination);g.gain.setValueAtTime(0.3,c.currentTime+o);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+o+0.3);os.start(c.currentTime+o);os.stop(c.currentTime+o+0.3);});}catch(e){}}
+  function tick(){
+    if(!cfg)return;var today=ymd(new Date()),hm=nowHM();
+    todayDoses().forEach(function(d){var k=doseKey(today,d.mi,d.t);
+      if(d.t===hm&&!log[k]&&!fired[k]){fired[k]=1;beep();
+        if(window.Notification&&Notification.permission==='granted'){try{new Notification('该吃药了',{body:d.t+' '+d.m.name,icon:'icon-192.png'});}catch(e){}}
+        toast('该吃 '+d.m.name+' 了');}});
+    $('today').textContent=fmtDay(new Date())+' '+hm;
+    if(!$('home').classList.contains('hide'))renderHome();
+  }
+  $('notifBtn').onclick=function(){
+    if(!window.Notification){toast('这个浏览器不支持弹窗，到点会响一声');beep();return;}
+    Notification.requestPermission().then(function(p){toast(p==='granted'?'已开启：网页开着时到点弹窗':'没开启，到点只会响一声');});
+  };
+
+  /* ---------- 其他 ---------- */
+  $('editBtn').onclick=function(){draft=JSON.parse(JSON.stringify(cfg.meds));show('setup');};
+  $('shareBtn').onclick=function(){
+    var url=location.origin+location.pathname,txt='一个简单的吃药提醒小工具，填好吃药方式就能用：';
+    if(navigator.share){navigator.share({title:'提醒吃药•通用版',text:txt,url:url}).catch(function(){});}
+    else if(navigator.clipboard){navigator.clipboard.writeText(txt+url).then(function(){toast('链接已复制，发给朋友吧');});}
+    else{prompt('复制这个链接发给朋友',url);}
+  };
+  function show(w){
+    $('setup').classList.toggle('hide',w!=='setup');$('home').classList.toggle('hide',w!=='home');
+    $('cancelSetup').classList.toggle('hide',!cfg);
+    if(w==='setup')renderSetup();else{$('gcalLinks').classList.add('hide');renderHome();}
+    window.scrollTo(0,0);
+  }
+  if(cfg&&cfg.meds&&cfg.meds.length){show('home');}else{draft=[newMed()];show('setup');}
+  tick();setInterval(tick,20000);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)tick();});
+})();
+</script>
+</body>
+</html>
