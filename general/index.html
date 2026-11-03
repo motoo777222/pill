@@ -57,21 +57,31 @@ input:focus{outline:none;border-color:var(--g2)}
 .tp{display:flex;align-items:center;gap:4px;border:2px solid var(--line);border-radius:14px;padding:0 8px;min-height:56px;background:#fff}
 .tp select{flex:1;min-width:0;font:inherit;font-size:22px;font-weight:600;border:0;background:none;color:var(--ink);text-align:center;text-align-last:center;-webkit-appearance:none;appearance:none;padding:8px 0;font-variant-numeric:tabular-nums}
 .tp span{font-size:22px;font-weight:700}
-.nextday{background:#2563eb;color:#fff;border-radius:16px;padding:16px 18px;display:grid;gap:4px;box-shadow:0 6px 20px rgba(37,99,235,.22)}
-.nextday .nd-l{font-size:15px;color:#dbe6ff}
-.nextday .nd-t{font-size:16px;color:#dbe6ff}
-.nextday .nd-d{font-size:28px;font-weight:700;line-height:1.2}
-.nextday .nd-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:6px}
-.nextday .nd-b{background:#fff;color:#1d4ed8;font-weight:700;font-size:16px;border-radius:999px;padding:6px 16px}
-.nextday .nd-h{font-size:19px;font-weight:600;font-variant-numeric:tabular-nums}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.refresh{flex:none;min-height:44px;padding:0 14px;border:0;border-radius:999px;background:#2563eb;color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer;margin-top:4px}
+.next{gap:10px}
+.next .lbl{font-size:16px;color:rgba(255,255,255,.85)}
+.next .bigdate{font-size:30px;font-weight:700;line-height:1.2}
+.next .times{display:block;font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+.next .row{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.next .pill{background:#fff;color:var(--g);font-weight:700;font-size:16px;border-radius:999px;padding:6px 16px}
+.next .divider{height:1px;background:rgba(255,255,255,.35);margin:4px 0}
+.next .go{min-height:60px;width:100%;border:0;border-radius:16px;background:#fff;color:var(--g);font:inherit;font-size:21px;font-weight:700;cursor:pointer}
+.next .undo{background:none;border:0;color:#fff;font:inherit;font-size:16px;text-decoration:underline;cursor:pointer;padding:4px 0;text-align:left}
+.next.s-red{background:var(--red)}.next.s-red .pill,.next.s-red .go{color:var(--red)}
+.next.s-blue{background:#2563eb}.next.s-blue .pill,.next.s-blue .go{color:#1d4ed8}
+.next.s-wait{background:#1f5f8b}.next.s-wait .pill{color:#1f5f8b}
+.confirmbox{display:grid;gap:10px;padding:14px;border:2px solid #f5c2c4;background:#fff5f5;border-radius:14px}
+.dangerbtn{color:var(--red)!important;border-color:#f5c2c4!important}
+.redbtn{background:var(--red)}
 .hide{display:none!important}
 </style>
 </head>
 <body>
 <div class="app">
-  <header>
-    <h1>提醒吃药•通用版</h1>
-    <div class="sub" id="today"></div>
+  <header class="top">
+    <div><h1>提醒吃药•通用版</h1><div class="sub" id="today"></div></div>
+    <button class="refresh" id="refreshBtn" aria-label="刷新">↻ 刷新</button>
   </header>
 
   <!-- 设置 -->
@@ -90,7 +100,7 @@ input:focus{outline:none;border-color:var(--g2)}
   <section id="home" class="hide" style="display:grid;gap:16px">
     <div class="card next" id="nextCard"></div>
     <div class="card">
-      <h2>今天要吃的药</h2>
+      <h2 id="listTitle">今天要吃的药</h2>
       <div id="list" style="display:grid;gap:10px"></div>
     </div>
     <div class="card">
@@ -111,6 +121,18 @@ input:focus{outline:none;border-color:var(--g2)}
       <div style="display:flex;gap:10px">
         <button class="btn ghost small" id="editBtn">修改设置</button>
         <button class="btn ghost small" id="shareBtn">分享给朋友</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>重新开始</h2>
+      <div class="hint">药吃完了、换药了，或想从头来过：清空设置和打卡记录，回到刚打开时的样子。</div>
+      <button class="btn ghost small dangerbtn" id="resetBtn">全部重置</button>
+      <div id="resetBox" class="confirmbox hide">
+        <div class="label">确定全部重置吗？清空后不能找回。</div>
+        <div style="display:flex;gap:10px">
+          <button class="btn small redbtn" id="resetYes">确定重置</button>
+          <button class="btn ghost small" id="resetNo">取消重置</button>
+        </div>
       </div>
     </div>
   </section>
@@ -191,61 +213,95 @@ input:focus{outline:none;border-color:var(--g2)}
       if(!draft[i].start)draft[i].start=ymd(new Date());
       if(draft[i].every===1)draft[i].start=draft[i].start||ymd(new Date());
     }
-    cfg={meds:draft,v:1};store(KEY_CFG,cfg);
+    var keep=cfg&&cfg.round;cfg={meds:draft,v:2,round:null,prevRound:null};if(keep){cfg.round=roundFrom(todayD());}ensureRound();store(KEY_CFG,cfg);
     toast(canStore?'已保存':'已保存（这个浏览器不让存，关掉就没了）');
     show('home');
   };
   $('cancelSetup').onclick=function(){show('home');};
 
-  /* ---------- 主页 ---------- */
+  /* ---------- 主页（轮回） ---------- */
   function doseKey(date,mi,t){return date+'|'+cfg.meds[mi].name+'|'+t;}
-  function todayDoses(){
-    var now=new Date(),out=[];
-    cfg.meds.forEach(function(m,mi){if(takesOn(m,now))m.times.forEach(function(t){out.push({mi:mi,m:m,t:t});});});
-    out.sort(function(a,b){return a.t<b.t?-1:a.t>b.t?1:0;});return out;
+  function addDays(d,n){return new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);}
+  function todayD(){var n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate());}
+  function dosesOn(ds){
+    var d=parseYmd(ds),out=[];
+    cfg.meds.forEach(function(m,mi){if(takesOn(m,d))m.times.forEach(function(t){out.push({mi:mi,m:m,t:t,k:doseKey(ds,mi,t)});});});
+    out.sort(function(a,b){return a.t<b.t?-1:a.t>b.t?1:a.mi-b.mi;});return out;
   }
+  function todayDoses(){return dosesOn(ymd(new Date()));}
+  function roundFrom(d){for(var i=0;i<400;i++){var x=addDays(d,i);if(dosesOn(ymd(x)).length)return ymd(x);}return null;}
+  function roundAfter(ds){return roundFrom(addDays(parseYmd(ds),1));}
+  function roundDone(ds){var ds2=dosesOn(ds);return ds2.length>0&&ds2.every(function(x){return !!log[x.k];});}
+  function ensureRound(){
+    var t=todayD(),ch=false;
+    if(!cfg.round||!dosesOn(cfg.round).length){cfg.round=roundFrom(t);cfg.prevRound=null;ch=true;}
+    // 这一轮吃完、而下一轮的日子已经到了：自动进入下一轮
+    for(var g=0;g<400&&cfg.round&&roundDone(cfg.round);g++){var nx=roundAfter(cfg.round);if(!nx||parseYmd(nx)>t)break;cfg.round=nx;cfg.prevRound=null;ch=true;}
+    if(ch)store(KEY_CFG,cfg);
+  }
+  function gapText(n){return n===0?'就是今天':n===1?'明天':n===2?'后天 · 还有 2 天':'还有 '+n+' 天';}
   function nowHM(){var d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes());}
+  function uniq(a){return a.filter(function(v,i){return a.indexOf(v)===i;});}
   function renderHome(){
-    var now=new Date(),today=ymd(now),hm=nowHM();
-    var doses=todayDoses(),list=$('list');list.innerHTML='';
-    if(!doses.length){list.innerHTML='<div class="off">今天不用吃药。</div>';}
+    ensureRound();
+    var t=todayD(),hm=nowHM(),r=cfg.round,nc=$('nextCard'),list=$('list');
+    if(!r){nc.className='card next';nc.innerHTML='<div class="lbl">没有要吃的药</div>';list.innerHTML='';return;}
+    var gap=dayDiff(t,parseYmd(r)),doses=dosesOn(r);
+    var pending=doses.filter(function(x){return !log[x.k];});
+    var anyLogged=doses.some(function(x){return !!log[x.k];});
+    $('listTitle').textContent=gap===0?'今天要吃的药':gap>0?'下一轮：'+fmtDay(parseYmd(r)):fmtDay(parseYmd(r))+' 还没吃完';
+    // 列表
+    list.innerHTML='';
     doses.forEach(function(d){
-      var k=doseKey(today,d.mi,d.t),done=!!log[k];
-      var due=!done&&d.t<=hm;
+      var done=!!log[d.k],due=!done&&(gap<0||(gap===0&&d.t<=hm));
+      var st=done?'已吃 '+log[d.k]:due?(gap<0?'这次漏了，可以补点':'到点了，该吃了'):(gap>0?'还没到这天':'还没到时间');
       var div=document.createElement('div');div.className='dose'+(done?' done':due?' due':'');
-      div.innerHTML='<div class="t">'+d.t+'</div><div><div class="n">'+esc(d.m.name)+'</div><div class="s">'+
-        (done?'已吃 '+log[k]:due?'到点了，该吃了':'还没到时间')+'</div></div>'+
-        '<button data-k="'+esc(k)+'">'+(done?'撤销':'已吃')+'</button>';
+      div.innerHTML='<div class="t">'+d.t+'</div><div><div class="n">'+esc(d.m.name)+'</div><div class="s">'+st+'</div></div>'+
+        '<button data-k="'+esc(d.k)+'">'+(done?'撤销':'已吃')+'</button>';
       list.appendChild(div);
     });
-    cfg.meds.forEach(function(m,mi){
-      var on=takesOn(m,now),allDone=on&&m.times.every(function(t){return !!log[doseKey(today,mi,t)];});
-      if(on&&!allDone)return;
-      var nd=nextDay(m,new Date(now.getFullYear(),now.getMonth(),now.getDate()+(on?1:0)));if(!nd)return;
-      var gap=dayDiff(now,nd);
-      var div=document.createElement('div');div.className='nextday';
-      div.innerHTML='<div class="nd-l">'+esc(m.name)+(allDone?' · 今天已吃完 ✓':' · 今天不用吃')+'</div>'+
-        '<div class="nd-t">下次吃药</div><div class="nd-d">'+fmtDay(nd)+'</div>'+
-        '<div class="nd-row"><span class="nd-b">'+(gap===1?'明天':'还有 '+gap+' 天')+'</span><span class="nd-h">'+m.times.join('、')+'</span></div>';
-      list.appendChild(div);
-    });
-    // 下一次
-    var nc=$('nextCard'),pending=doses.filter(function(d){return !log[doseKey(today,d.mi,d.t)];});
-    var late=pending.filter(function(d){return d.t<=hm;}), up=pending.filter(function(d){return d.t>hm;});
-    if(late.length){nc.style.background='var(--red)';
-      nc.innerHTML='<div class="hint">现在该吃</div><div class="big">'+late.map(function(d){return esc(d.m.name);}).filter(function(v,i,a){return a.indexOf(v)===i;}).join('、')+'</div><div class="hint">吃完点下面的“已吃”</div>';}
-    else if(up.length){nc.style.background='';
-      nc.innerHTML='<div class="hint">下一次吃药</div><div class="big">'+up[0].t+'</div><div class="hint">'+esc(up[0].m.name)+'</div>';}
-    else{nc.style.background='';
-      var best=null;cfg.meds.forEach(function(m){var nd=nextDay(m,new Date(now.getFullYear(),now.getMonth(),now.getDate()+1));if(nd){var s=ymd(nd)+' '+m.times[0];if(!best||s<best.s)best={s:s,m:m,d:nd};}});
-      nc.innerHTML='<div class="hint">'+(doses.length?'今天的药都吃完了 ✓':'今天不用吃药')+'</div>'+
-        (best?'<div class="big">'+best.m.times[0]+'</div><div class="hint">下次：'+fmtDay(best.d)+' '+esc(best.m.name)+'</div>':'');}
+    // 顶部卡片
+    var h='',cls='card next';
+    var undo=(cfg.prevRound&&!anyLogged)?'<button class="undo" id="undoBtn">↩ 本次恢复（退回上一轮）</button>':'';
+    if(!pending.length){
+      var nx=roundAfter(r),nd=nx?parseYmd(nx):null,ng=nd?dayDiff(t,nd):0;
+      h='<div class="lbl">'+(gap===0?'今天的药都吃完了 ✓':'这一轮吃完了 ✓')+'</div>';
+      if(nd){h+='<div class="divider"></div><div class="lbl">下次吃药</div><div class="bigdate">'+fmtDay(nd)+'</div>'+
+        '<span class="times">'+uniq(dosesOn(nx).map(function(x){return x.t;})).join('、')+'</span>'+
+        '<div class="row"><span class="pill">'+gapText(ng)+'</span></div>'+
+        '<button class="go" id="goBtn">确认，进入下一轮 →</button>';}
+    }else if(gap<0){
+      cls+=' s-red';
+      h='<div class="lbl">漏吃提醒</div><div class="bigdate">'+fmtDay(parseYmd(r))+'</div>'+
+        '<div class="lbl">还有 '+pending.length+' 次没点“已吃”。吃了就补点，没吃就跳过。</div>'+
+        '<button class="go" id="skipBtn">跳过这次，进入下一轮 →</button>';
+    }else if(gap>0){
+      cls+=' s-blue';
+      h='<div class="lbl">下一轮吃药</div><div class="bigdate">'+fmtDay(parseYmd(r))+'</div>'+
+        '<span class="times">'+uniq(doses.map(function(x){return x.t;})).join('、')+'</span>'+
+        '<div class="row"><span class="pill">'+gapText(gap)+'</span></div>'+undo;
+    }else{
+      var late=pending.filter(function(x){return x.t<=hm;}),up=pending.filter(function(x){return x.t>hm;});
+      if(late.length){cls+=' s-red';
+        h='<div class="lbl">现在该吃</div><div class="bigdate">'+uniq(late.map(function(x){return esc(x.m.name);})).join('、')+'</div>'+
+          '<span class="times">'+uniq(late.map(function(x){return x.t;})).join('、')+'</span><div class="lbl">吃完点下面的“已吃”</div>'+undo;}
+      else{cls+=' s-wait';
+        h='<div class="lbl">今天下一次吃药</div><div class="bigdate">'+up[0].t+'</div><span class="times" style="font-size:19px">'+
+          uniq(up.filter(function(x){return x.t===up[0].t;}).map(function(x){return esc(x.m.name);})).join('、')+'</span>'+undo;}
+    }
+    nc.className=cls;nc.innerHTML=h;
   }
+  function advance(){cfg.prevRound=cfg.round;cfg.round=roundAfter(cfg.round);store(KEY_CFG,cfg);renderHome();window.scrollTo(0,0);}
+  $('nextCard').addEventListener('click',function(e){
+    var b=e.target.closest('button');if(!b)return;
+    if(b.id==='goBtn'){advance();toast('已进入下一轮');}
+    else if(b.id==='skipBtn'){advance();toast('已跳过，进入下一轮');}
+    else if(b.id==='undoBtn'){cfg.round=cfg.prevRound;cfg.prevRound=null;store(KEY_CFG,cfg);renderHome();toast('已恢复');}
+  });
   $('list').addEventListener('click',function(e){
     var b=e.target.closest('button');if(!b)return;var k=b.dataset.k;
     if(log[k]){delete log[k];toast('已撤销');}else{log[k]=nowHM();toast('好的，记下了 ✓');}
-    // 只留最近 60 天
-    var cut=ymd(new Date(Date.now()-60*86400000));Object.keys(log).forEach(function(x){if(x.split('|')[0]<cut)delete log[x];});
+    var cut=ymd(new Date(Date.now()-90*86400000));Object.keys(log).forEach(function(x){if(x.split('|')[0]<cut)delete log[x];});
     store(KEY_LOG,log);renderHome();
   });
 
@@ -295,7 +351,7 @@ input:focus{outline:none;border-color:var(--g2)}
         if(window.Notification&&Notification.permission==='granted'){try{new Notification('该吃药了',{body:d.t+' '+d.m.name,icon:'icon-192.png'});}catch(e){}}
         toast('该吃 '+d.m.name+' 了');}});
     $('today').textContent=fmtDay(new Date())+' '+hm;
-    if(!$('home').classList.contains('hide'))renderHome();
+    if(!$('home').classList.contains('hide')&&tick._m!==today+hm){tick._m=today+hm;renderHome();}
   }
   $('notifBtn').onclick=function(){
     if(!window.Notification){toast('这个浏览器不支持弹窗，到点会响一声');beep();return;}
@@ -303,6 +359,13 @@ input:focus{outline:none;border-color:var(--g2)}
   };
 
   /* ---------- 其他 ---------- */
+  $('refreshBtn').onclick=function(){location.reload();};
+  $('resetBtn').onclick=function(){$('resetBox').classList.remove('hide');$('resetBtn').classList.add('hide');};
+  $('resetNo').onclick=function(){$('resetBox').classList.add('hide');$('resetBtn').classList.remove('hide');};
+  $('resetYes').onclick=function(){
+    try{if(canStore){localStorage.removeItem(KEY_CFG);localStorage.removeItem(KEY_LOG);}}catch(e){}
+    mem={};cfg=null;log={};draft=[newMed()];$('resetBox').classList.add('hide');$('resetBtn').classList.remove('hide');
+    show('setup');toast('已全部重置');};
   $('editBtn').onclick=function(){draft=JSON.parse(JSON.stringify(cfg.meds));show('setup');};
   $('shareBtn').onclick=function(){
     var url=location.origin+location.pathname,txt='一个简单的吃药提醒小工具，填好吃药方式就能用：';
