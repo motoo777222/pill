@@ -57,6 +57,13 @@ input:focus{outline:none;border-color:var(--g2)}
 .tp{display:flex;align-items:center;gap:4px;border:2px solid var(--line);border-radius:14px;padding:0 8px;min-height:56px;background:#fff}
 .tp select{flex:1;min-width:0;font:inherit;font-size:22px;font-weight:600;border:0;background:none;color:var(--ink);text-align:center;text-align-last:center;-webkit-appearance:none;appearance:none;padding:8px 0;font-variant-numeric:tabular-nums}
 .tp span{font-size:22px;font-weight:700}
+.nextday{background:#2563eb;color:#fff;border-radius:16px;padding:16px 18px;display:grid;gap:4px;box-shadow:0 6px 20px rgba(37,99,235,.22)}
+.nextday .nd-l{font-size:15px;color:#dbe6ff}
+.nextday .nd-t{font-size:16px;color:#dbe6ff}
+.nextday .nd-d{font-size:28px;font-weight:700;line-height:1.2}
+.nextday .nd-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:6px}
+.nextday .nd-b{background:#fff;color:#1d4ed8;font-weight:700;font-size:16px;border-radius:999px;padding:6px 16px}
+.nextday .nd-h{font-size:19px;font-weight:600;font-variant-numeric:tabular-nums}
 .hide{display:none!important}
 </style>
 </head>
@@ -211,9 +218,16 @@ input:focus{outline:none;border-color:var(--g2)}
         '<button data-k="'+esc(k)+'">'+(done?'撤销':'已吃')+'</button>';
       list.appendChild(div);
     });
-    cfg.meds.forEach(function(m){
-      if(!takesOn(m,now)){var nd=nextDay(m,now);var div=document.createElement('div');div.className='off';
-        div.textContent=m.name+'：今天不吃，下次 '+(nd?ymd(nd):'')+' '+m.times[0];list.appendChild(div);}
+    cfg.meds.forEach(function(m,mi){
+      var on=takesOn(m,now),allDone=on&&m.times.every(function(t){return !!log[doseKey(today,mi,t)];});
+      if(on&&!allDone)return;
+      var nd=nextDay(m,new Date(now.getFullYear(),now.getMonth(),now.getDate()+(on?1:0)));if(!nd)return;
+      var gap=dayDiff(now,nd);
+      var div=document.createElement('div');div.className='nextday';
+      div.innerHTML='<div class="nd-l">'+esc(m.name)+(allDone?' · 今天已吃完 ✓':' · 今天不用吃')+'</div>'+
+        '<div class="nd-t">下次吃药</div><div class="nd-d">'+fmtDay(nd)+'</div>'+
+        '<div class="nd-row"><span class="nd-b">'+(gap===1?'明天':'还有 '+gap+' 天')+'</span><span class="nd-h">'+m.times.join('、')+'</span></div>';
+      list.appendChild(div);
     });
     // 下一次
     var nc=$('nextCard'),pending=doses.filter(function(d){return !log[doseKey(today,d.mi,d.t)];});
