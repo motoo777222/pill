@@ -54,6 +54,9 @@ input:focus{outline:none;border-color:var(--g2)}
 .steps{padding-left:22px;font-size:16px;display:grid;gap:4px}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#1a1d24;color:#fff;padding:12px 20px;border-radius:999px;font-size:16px;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%;text-align:center}
 .toast.show{opacity:1}
+.tp{display:flex;align-items:center;gap:4px;border:2px solid var(--line);border-radius:14px;padding:0 8px;min-height:56px;background:#fff}
+.tp select{flex:1;min-width:0;font:inherit;font-size:22px;font-weight:600;border:0;background:none;color:var(--ink);text-align:center;text-align-last:center;-webkit-appearance:none;appearance:none;padding:8px 0;font-variant-numeric:tabular-nums}
+.tp span{font-size:22px;font-weight:700}
 .hide{display:none!important}
 </style>
 </head>
@@ -133,6 +136,14 @@ input:focus{outline:none;border-color:var(--g2)}
   function fmtDay(d){return ymd(d)+'（周'+WEEK[d.getDay()]+'）';}
 
   /* ---------- 设置 ---------- */
+  function timePicker(i,j,t){
+    var p=t.split(':'),hh=+p[0],mm=+p[1],o='<div class="tp"><select data-time="'+j+'" data-part="h" data-i="'+i+'">';
+    for(var a=0;a<24;a++)o+='<option value="'+pad(a)+'"'+(a===hh?' selected':'')+'>'+pad(a)+'</option>';
+    o+='</select><span>:</span><select data-time="'+j+'" data-part="m" data-i="'+i+'">';
+    var ms=[];for(var b=0;b<60;b+=5)ms.push(b);if(ms.indexOf(mm)<0){ms.push(mm);ms.sort(function(x,y){return x-y;});}
+    ms.forEach(function(b){o+='<option value="'+pad(b)+'"'+(b===mm?' selected':'')+'>'+pad(b)+'</option>';});
+    return o+'</select></div>';
+  }
   function renderSetup(){
     var box=$('meds');box.innerHTML='';
     draft.forEach(function(m,i){
@@ -144,8 +155,8 @@ input:focus{outline:none;border-color:var(--g2)}
           '<button data-every="2" data-i="'+i+'" class="'+(m.every===2?'on':'')+'">隔天</button></div>'+
         '<div class="label">一天几次</div><div class="seg">';
       [1,2,3,4].forEach(function(c){h+='<button data-count="'+c+'" data-i="'+i+'" class="'+(m.count===c?'on':'')+'">'+c+' 次</button>';});
-      h+='</div><div class="label">吃药时间</div><div class="hint">已按次数排好，可以点开改。</div><div class="times">';
-      m.times.forEach(function(t,j){h+='<input type="time" step="60" data-time="'+j+'" data-i="'+i+'" value="'+t+'">';});
+      h+='</div><div class="label">吃药时间</div><div class="hint">已按次数排好，24 小时制，点数字可以改。</div><div class="times">';
+      m.times.forEach(function(t,j){h+=timePicker(i,j,t);});
       h+='</div>';
       if(m.every===2){h+='<div class="label">哪天开始吃</div><div class="hint">隔天吃的药，从这天算起。</div><input type="date" data-k="start" data-i="'+i+'" value="'+m.start+'">';}
       div.innerHTML=h;box.appendChild(div);
@@ -157,10 +168,12 @@ input:focus{outline:none;border-color:var(--g2)}
     else if(b.dataset.count){var c=+b.dataset.count;draft[i].count=c;draft[i].times=DEFAULT_TIMES[c].slice();renderSetup();}
     else if(b.dataset.del){draft.splice(+b.dataset.del,1);renderSetup();}
   });
+  $('meds').addEventListener('change',function(e){var el=e.target;if(el.tagName==='SELECT')el.dispatchEvent(new Event('input',{bubbles:true}));});
   $('meds').addEventListener('input',function(e){
     var el=e.target,i=+el.dataset.i;if(isNaN(i))return;
     if(el.dataset.k)draft[i][el.dataset.k]=el.value;
-    if(el.dataset.time!==undefined&&el.value)draft[i].times[+el.dataset.time]=el.value;
+    if(el.dataset.time!==undefined){var j=+el.dataset.time,cur=draft[i].times[j].split(':');
+      if(el.dataset.part==='h')cur[0]=el.value;else cur[1]=el.value;draft[i].times[j]=cur[0]+':'+cur[1];}
   });
   $('addMed').onclick=function(){draft.push(newMed());renderSetup();};
   $('save').onclick=function(){
