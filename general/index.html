@@ -302,7 +302,7 @@ input:focus{outline:none;border-color:var(--g2)}
     });
     // 顶部卡片
     var h='',cls='card next';
-    var undo=(cfg.prevRound&&!anyLogged)?'<button class="undo" id="undoBtn">↩ 本次恢复（退回上一轮）</button>':'';
+    var undo=(cfg.prevRound&&!anyLogged&&gap>0)?'<button class="undo" id="undoBtn">↩ 本次恢复（退回上一轮）</button>':'';
     if(!pending.length){
       var nx=roundAfter(r),nd=nx?parseYmd(nx):null,ng=nd?dayDiff(t,nd):0;
       h='<div class="lbl">'+(gap===0?'今天的药都吃完了 ✓':'这一轮吃完了 ✓')+'</div>';
@@ -324,10 +324,10 @@ input:focus{outline:none;border-color:var(--g2)}
       var late=pending.filter(function(x){return x.t<=hm;}),up=pending.filter(function(x){return x.t>hm;});
       if(late.length){cls+=' s-red';
         h='<div class="lbl">现在该吃</div><div class="bigdate">'+uniq(late.map(function(x){return esc(x.m.name);})).join('、')+'</div>'+
-          '<span class="times">'+uniq(late.map(function(x){return x.t;})).join('、')+'</span><div class="lbl">吃完点下面的“已吃”</div>'+undo;}
+          '<span class="times">'+uniq(late.map(function(x){return x.t;})).join('、')+'</span><div class="lbl">吃完点下面的“已吃”</div>';}
       else{cls+=' s-wait';
         h='<div class="lbl">今天下一次吃药</div><div class="bigdate">'+up[0].t+'</div><span class="times" style="font-size:19px">'+
-          uniq(up.filter(function(x){return x.t===up[0].t;}).map(function(x){return esc(x.m.name);})).join('、')+'</span>'+undo;}
+          uniq(up.filter(function(x){return x.t===up[0].t;}).map(function(x){return esc(x.m.name);})).join('、')+'</span>';}
     }
     nc.className=cls;nc.innerHTML=h;
     if(typeof renderCalMarks==='function')renderCalMarks();
