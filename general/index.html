@@ -346,7 +346,7 @@ input:focus{outline:none;border-color:var(--g2)}
     else if(b.id==='undoBtn'){cfg.round=cfg.prevRound;cfg.prevRound=null;store(KEY_CFG,cfg);renderHome();toast('已恢复');}
   });
   $('list').addEventListener('click',function(e){
-    var b=e.target.closest('button');if(!b)return;var k=b.dataset.k;
+    var b=e.target.closest('button');if(!b)return;var k=b.dataset.k;if(!k||b.disabled)return;
     if(log[k]){delete log[k];toast('已撤销');}else{log[k]=nowHM();toast('好的，记下了 ✓');}
     var cut=ymd(new Date(Date.now()-90*86400000));Object.keys(log).forEach(function(x){if(x.split('|')[0]<cut)delete log[x];});
     store(KEY_LOG,log);renderHome();
