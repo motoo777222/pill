@@ -58,7 +58,7 @@ input:focus{outline:none;border-color:var(--g2)}
 .tp select{flex:1;min-width:0;font:inherit;font-size:22px;font-weight:600;border:0;background:none;color:var(--ink);text-align:center;text-align-last:center;-webkit-appearance:none;appearance:none;padding:8px 0;font-variant-numeric:tabular-nums}
 .tp span{font-size:22px;font-weight:700}
 .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
-.refresh{flex:none;min-height:44px;padding:0 14px;border:1.5px solid #d6dae3;border-radius:999px;background:transparent;color:#8a909c;font:inherit;font-size:15px;font-weight:600;cursor:pointer;margin-top:4px}
+.refresh{flex:none;min-height:44px;padding:0 14px;border:1.5px solid #f1dc94;border-radius:999px;background:#fff6d6;color:#8a6a12;font:inherit;font-size:15px;font-weight:600;cursor:pointer;margin-top:4px}
 .next{gap:10px}
 .next .lbl{font-size:16px;color:rgba(255,255,255,.85)}
 .next .bigdate{font-size:30px;font-weight:700;line-height:1.2}
@@ -75,6 +75,15 @@ input:focus{outline:none;border-color:var(--g2)}
 .confirmbox{display:grid;gap:10px;padding:14px;border:2px solid #f5c2c4;background:#fff5f5;border-radius:14px}
 .dangerbtn{color:var(--red)!important;border-color:#f5c2c4!important}
 .redbtn{background:var(--red)}
+.btn.purple{background:#7c3aed}
+.calbtn{display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;min-height:50px;border-radius:14px;background:#f3edff;border:2px solid #dccdfb;color:#5b21b6;font-size:17px;font-weight:700;padding:6px 12px;text-align:center}
+.calbtn.set{background:#ecf8f0;border-color:#bfe3cd;color:var(--g)}
+.calmark{font-size:16px;font-weight:700;color:var(--g);background:#ecf8f0;border-radius:12px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.calmark.part{color:#9a5a00;background:#fff4dc}
+.calmark button{background:none;border:0;font:inherit;font-size:14px;font-weight:400;color:var(--grey);text-decoration:underline;cursor:pointer}
+.help{border:2px solid var(--line);border-radius:14px;padding:12px 14px}
+.help summary{font-size:17px;font-weight:600;cursor:pointer;color:#1f5f8b}
+.help .steps{margin-top:10px}
 .hide{display:none!important}
 </style>
 </head>
@@ -106,11 +115,40 @@ input:focus{outline:none;border-color:var(--g2)}
     </div>
     <div class="card">
       <h2>准时响铃提醒</h2>
-      <div class="hint">网页关着时没法自己响，加进手机日历后，到点就会响。改了设置要重新加一次。</div>
+      <div class="hint">网页没法自己响铃。把吃药时间加进手机日历，到点由日历发通知、响铃、震动。改了设置要重新加一次。</div>
       <button class="btn" id="icsBtn">苹果手机：加到日历</button>
-      <button class="btn ghost" id="gcalBtn">安卓手机：加到谷歌日历</button>
+      <div class="calmark hide" id="icsMark"></div>
+      <button class="btn purple" id="gcalBtn">安卓手机：加到谷歌日历</button>
+      <div class="calmark hide" id="gcalMark"></div>
       <div id="gcalLinks" class="hide" style="display:grid;gap:8px"></div>
       <button class="btn ghost small" id="notifBtn">网页开着时也弹窗提醒</button>
+      <details class="help">
+        <summary>到点没响？看这里</summary>
+        <ol class="steps">
+          <li>谷歌日历保存前：看顶部的账号，要选手机日历正在用的那个账号；把“通知”改成“活动开始时”（默认可能是提前 30 分钟，或者没有通知）。</li>
+          <li>保存后：在日历里点开那条吃药提醒，确认通知那一行写的是“活动开始时”。</li>
+          <li>手机设置 → 应用 → 日历 → 通知：打开“允许通知”，“活动提醒”这一项打开声音和振动。</li>
+          <li>勿扰模式会把提醒静音；电池设置里把日历设成“不限制”。</li>
+          <li>网页弹窗只在本页正显示在屏幕上时才出现，切到后台就不会弹，不能代替日历。</li>
+        </ol>
+      </details>
+      <details class="help">
+        <summary>能用手机“时钟”闹钟吗？</summary>
+        <ol class="steps">
+          <li>网页不能自动帮你建闹钟，日历提醒也不会出现在时钟里。</li>
+          <li>每天吃的药：可以在时钟里手动新建闹钟，重复选“每天”。</li>
+          <li>隔天吃的药：时钟只能按星期几重复，做不到隔天，请用日历提醒。</li>
+        </ol>
+      </details>
+      <details class="help">
+        <summary>怎么清空日历里的吃药提醒</summary>
+        <ol class="steps">
+          <li>谷歌日历：点开任意一条“吃药：…” → 删除（垃圾桶或 ⋮ 菜单）→ 选“所有活动”。</li>
+          <li>每个时间点是单独一组，比如 08:00 和 20:00，要各删一次；没有一键全清。</li>
+          <li>苹果日历：点开那条日程 → 删除日程 → “删除所有将来日程”。</li>
+          <li>删完后点本页的“清除已设置标记”。</li>
+        </ol>
+      </details>
     </div>
     <div class="card">
       <h2>放到手机桌面</h2>
@@ -291,6 +329,7 @@ input:focus{outline:none;border-color:var(--g2)}
           uniq(up.filter(function(x){return x.t===up[0].t;}).map(function(x){return esc(x.m.name);})).join('、')+'</span>'+undo;}
     }
     nc.className=cls;nc.innerHTML=h;
+    if(typeof renderCalMarks==='function')renderCalMarks();
   }
   function advance(){cfg.prevRound=cfg.round;cfg.round=roundAfter(cfg.round);store(KEY_CFG,cfg);renderHome();window.scrollTo(0,0);}
   $('nextCard').addEventListener('click',function(e){
@@ -311,6 +350,19 @@ input:focus{outline:none;border-color:var(--g2)}
   function firstDate(m){var s=parseYmd(m.start),t=new Date();t=new Date(t.getFullYear(),t.getMonth(),t.getDate());
     if(s>=t)return m.start;var d=nextDay(m,t);return ymd(d);}
   function icsEsc(s){return s.replace(/[\\;,]/g,function(c){return '\\'+c;});}
+  var KEY_CAL='pillGeneral.cal',calm=load(KEY_CAL,{});
+  function slots(){var o=[];cfg.meds.forEach(function(m){m.times.forEach(function(t){o.push({m:m,t:t,sig:m.name+'|'+t+'|'+m.every+'|'+(m.every===2?m.start:'')});});});return o;}
+  function renderCalMarks(){
+    if(!cfg)return;var sl=slots(),g=sl.filter(function(x){return calm['g|'+x.sig];}).length,ios=calm['i|'+sl.map(function(x){return x.sig;}).join(',')];
+    var im=$('icsMark'),gm=$('gcalMark');
+    im.classList.toggle('hide',!ios);im.innerHTML='✓ 已设置日历提醒<button data-clr="i">清除已设置标记</button>';
+    gm.classList.toggle('hide',!g);gm.classList.toggle('part',g>0&&g<sl.length);
+    gm.innerHTML=(g>=sl.length?'✓ 已设置日历提醒（'+g+'/'+sl.length+'）':'已设置 '+g+'/'+sl.length+'，还有 '+(sl.length-g)+' 个没设')+'<button data-clr="g">清除已设置标记</button>';
+    if(!$('gcalLinks').classList.contains('hide'))buildGcal();
+  }
+  function clrMarks(e){var b=e.target.closest('button[data-clr]');if(!b)return;var pre=b.dataset.clr+'|';
+    Object.keys(calm).forEach(function(k){if(k.indexOf(pre)===0)delete calm[k];});store(KEY_CAL,calm);renderCalMarks();toast('已清除标记');}
+  $('icsMark').addEventListener('click',clrMarks);$('gcalMark').addEventListener('click',clrMarks);
   $('icsBtn').onclick=function(){
     var st=new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
     var L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//pill-general//CN','CALSCALE:GREGORIAN','METHOD:PUBLISH'];
@@ -324,23 +376,28 @@ input:focus{outline:none;border-color:var(--g2)}
     L.push('END:VCALENDAR');
     var data='data:text/calendar;charset=utf-8,'+encodeURIComponent(L.join('\r\n'));
     var a=document.createElement('a');a.href=data;a.download='吃药提醒.ics';document.body.appendChild(a);a.click();a.remove();
+    calm['i|'+slots().map(function(x){return x.sig;}).join(',')]=1;store(KEY_CAL,calm);renderCalMarks();
     toast('打开后点“全部添加”');
   };
-  $('gcalBtn').onclick=function(){
+  function buildGcal(){
     var box=$('gcalLinks'),tz=(Intl.DateTimeFormat().resolvedOptions().timeZone)||'';box.innerHTML='';
-    cfg.meds.forEach(function(m){m.times.forEach(function(t){
+    slots().forEach(function(x){var m=x.m,t=x.t;
       var d=firstDate(m),s=icsDate(d,t);var endD=new Date(parseYmd(d).getTime());var p=t.split(':');endD.setHours(+p[0],+p[1]+10);
       var e=ymd(endD).replace(/-/g,'')+'T'+pad(endD.getHours())+pad(endD.getMinutes())+'00';
       var url='https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent('吃药：'+m.name)+
         '&dates='+s+'/'+e+'&recur='+encodeURIComponent('RRULE:FREQ=DAILY;INTERVAL='+m.every)+(tz?'&ctz='+encodeURIComponent(tz):'')+
-        '&details='+encodeURIComponent('提醒时间请设为“活动开始时”');
-      var a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.className='btn ghost small';
-      a.style.cssText='display:flex;align-items:center;justify-content:center;text-decoration:none';
-      a.textContent=t+' '+m.name+'（'+(m.every===2?'隔天':'每天')+'）';box.appendChild(a);
-    });});
-    box.insertAdjacentHTML('afterbegin','<div class="hint">每个时间点一次，逐个点开保存。保存前把“通知”改成“活动开始时”。</div>');
-    box.classList.remove('hide');
-  };
+        '&details='+encodeURIComponent('保存前请把“通知”改为“活动开始时”');
+      var set=!!calm['g|'+x.sig];
+      var a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.className='calbtn'+(set?' set':'');
+      a.dataset.sig=x.sig;a.textContent=(set?'✓ 已设置 · ':'')+t+' '+m.name+'（'+(m.every===2?'隔天':'每天')+'）';box.appendChild(a);
+    });
+    box.insertAdjacentHTML('afterbegin','<div class="hint">每个时间点点一次，在谷歌日历里把“通知”改成“活动开始时”再保存。点过的会标上“✓ 已设置”。</div>');
+  }
+  $('gcalLinks').addEventListener('click',function(e){var a=e.target.closest('a[data-sig]');if(!a)return;
+    calm['g|'+a.dataset.sig]=1;store(KEY_CAL,calm);setTimeout(renderCalMarks,300);});
+  $('gcalBtn').onclick=function(){var box=$('gcalLinks');
+    if(!box.classList.contains('hide')){box.classList.add('hide');return;}
+    buildGcal();box.classList.remove('hide');};
 
   /* ---------- 网页提醒 ---------- */
   var fired={};
@@ -364,8 +421,8 @@ input:focus{outline:none;border-color:var(--g2)}
   $('resetBtn').onclick=function(){$('resetBox').classList.remove('hide');$('resetBtn').classList.add('hide');};
   $('resetNo').onclick=function(){$('resetBox').classList.add('hide');$('resetBtn').classList.remove('hide');};
   $('resetYes').onclick=function(){
-    try{if(canStore){localStorage.removeItem(KEY_CFG);localStorage.removeItem(KEY_LOG);}}catch(e){}
-    mem={};cfg=null;log={};draft=[newMed()];$('resetBox').classList.add('hide');$('resetBtn').classList.remove('hide');
+    try{if(canStore){localStorage.removeItem(KEY_CFG);localStorage.removeItem(KEY_LOG);localStorage.removeItem(KEY_CAL);}}catch(e){}
+    mem={};cfg=null;log={};calm={};draft=[newMed()];$('resetBox').classList.add('hide');$('resetBtn').classList.remove('hide');
     show('setup');toast('已全部重置');};
   $('editBtn').onclick=function(){draft=JSON.parse(JSON.stringify(cfg.meds));show('setup');};
   $('shareBtn').onclick=function(){
