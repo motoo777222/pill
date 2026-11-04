@@ -126,8 +126,8 @@ input:focus{outline:none;border-color:var(--g2)}
         <summary>到点没响？看这里</summary>
         <ol class="steps">
           <li>保存前看顶部：要选“活动”，不要选“任务”（任务前面带 ✓ 圈，不能设响铃通知）。</li>
-          <li>谷歌日历保存前：看顶部的账号，要选手机日历正在用的那个账号；把“通知”改成“活动开始时”（默认可能是提前 30 分钟，或者没有通知）。</li>
-          <li>保存后：在日历里点开那条吃药提醒，确认通知那一行写的是“活动开始时”。</li>
+          <li>谷歌日历保存前：看顶部的账号，要选手机日历正在用的那个账号；点铃铛 🔔 那一行（写着“提前 10 分钟”“提前 30 分钟”之类），改成“活动开始时”，提醒就会准点响，不会提前。</li>
+          <li>保存后：在日历里点开那条吃药提醒，看铃铛那一行写的是“活动开始时”还是“提前 X 分钟”。</li>
           <li>手机设置 → 应用 → 日历 → 通知：打开“允许通知”，“活动提醒”这一项打开声音和振动。</li>
           <li>勿扰模式会把提醒静音；电池设置里把日历设成“不限制”。</li>
           <li>网页弹窗只在本页正显示在屏幕上时才出现，切到后台就不会弹，不能代替日历。</li>
@@ -386,13 +386,12 @@ input:focus{outline:none;border-color:var(--g2)}
       var d=firstDate(m),s=icsDate(d,t);var endD=new Date(parseYmd(d).getTime());var p=t.split(':');endD.setHours(+p[0],+p[1]+10);
       var e=ymd(endD).replace(/-/g,'')+'T'+pad(endD.getHours())+pad(endD.getMinutes())+'00';
       var url='https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent('吃药：'+m.name)+
-        '&dates='+s+'/'+e+'&recur='+encodeURIComponent('RRULE:FREQ=DAILY;INTERVAL='+m.every)+(tz?'&ctz='+encodeURIComponent(tz):'')+
-        '&details='+encodeURIComponent('保存前请把“通知”改为“活动开始时”');
+        '&dates='+s+'/'+e+'&recur='+encodeURIComponent('RRULE:FREQ=DAILY;INTERVAL='+m.every)+(tz?'&ctz='+encodeURIComponent(tz):'');
       var set=!!calm['g|'+x.sig];
       var a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.className='calbtn'+(set?' set':'');
       a.dataset.sig=x.sig;a.textContent=(set?'✓ 已设置 · ':'')+t+' '+m.name+'（'+(m.every===2?'隔天':'每天')+'）';box.appendChild(a);
     });
-    box.insertAdjacentHTML('afterbegin','<div class="hint">每个时间点点一次，在谷歌日历里选“活动”（不是“任务”），把“通知”改成“活动开始时”再保存。点过的会标上“✓ 已设置”。</div>');
+    box.insertAdjacentHTML('afterbegin','<div class="hint">每个时间点点一次，在谷歌日历里选“活动”（不是“任务”），点铃铛 🔔 那一行（写着“提前 X 分钟”），改成“活动开始时”再保存；不改的话会提前几分钟响。点过的会标上“✓ 已设置”。</div>');
   }
   $('gcalLinks').addEventListener('click',function(e){var a=e.target.closest('a[data-sig]');if(!a)return;
     calm['g|'+a.dataset.sig]=1;store(KEY_CAL,calm);setTimeout(renderCalMarks,300);});
