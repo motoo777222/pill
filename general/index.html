@@ -44,6 +44,8 @@ input:focus{outline:none;border-color:var(--g2)}
 .dose .s{font-size:15px;color:var(--grey)}
 .dose button{min-height:52px;padding:0 18px;font:inherit;font-size:19px;font-weight:700;border:0;border-radius:14px;background:var(--g2);color:#fff;cursor:pointer}
 .dose.done{background:#eaf6ef;border-color:#bfe3cd}
+.dose.wait button{background:#eceef2;color:#9aa1ad;cursor:default;font-size:17px}
+.dose.wait .s{color:#1d4ed8;font-variant-numeric:tabular-nums}
 .dose.done button{background:#fff;color:var(--g);border:2px solid #bfe3cd;font-size:16px}
 .dose.due{border-color:var(--red);background:#fff5f5}
 .dose.due .s{color:var(--red);font-weight:600}
@@ -282,6 +284,9 @@ input:focus{outline:none;border-color:var(--g2)}
   function gapText(n){return n===0?'就是今天':n===1?'明天':n===2?'后天 · 还有 2 天':'还有 '+n+' 天';}
   function nowHM(){var d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes());}
   function uniq(a){return a.filter(function(v,i){return a.indexOf(v)===i;});}
+  function cdText(ds,t){var p=t.split(':'),tg=parseYmd(ds);tg.setHours(+p[0],+p[1],0,0);
+    var m=Math.max(0,Math.ceil((tg-new Date())/60000)),dd=Math.floor(m/1440),hh=Math.floor(m%1440/60),mm=m%60;
+    return '还有 '+(dd?dd+' 天 ':'')+(dd||hh?hh+' 小时 ':'')+pad(mm)+' 分';}
   function renderHome(){
     ensureRound();
     var t=todayD(),hm=nowHM(),r=cfg.round,nc=$('nextCard'),list=$('list');
@@ -294,10 +299,11 @@ input:focus{outline:none;border-color:var(--g2)}
     list.innerHTML='';
     doses.forEach(function(d){
       var done=!!log[d.k],due=!done&&(gap<0||(gap===0&&d.t<=hm));
-      var st=done?'已吃 '+log[d.k]:due?(gap<0?'这次漏了，可以补点':'到点了，该吃了'):(gap>0?'还没到这天':'还没到时间');
-      var div=document.createElement('div');div.className='dose'+(done?' done':due?' due':'');
+      var wait=!done&&gap>0;
+      var st=done?'已吃 '+log[d.k]:due?(gap<0?'这次漏了，可以补点':'到点了，该吃了'):(wait?cdText(r,d.t):'还没到时间');
+      var div=document.createElement('div');div.className='dose'+(done?' done':due?' due':wait?' wait':'');
       div.innerHTML='<div class="t">'+d.t+'</div><div><div class="n">'+esc(d.m.name)+'</div><div class="s">'+st+'</div></div>'+
-        '<button data-k="'+esc(d.k)+'">'+(done?'撤销':'已吃')+'</button>';
+        (wait?'<button disabled>等待中</button>':'<button data-k="'+esc(d.k)+'">'+(done?'撤销':'已吃')+'</button>');
       list.appendChild(div);
     });
     // 顶部卡片
