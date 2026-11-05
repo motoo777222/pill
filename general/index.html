@@ -60,7 +60,12 @@ input:focus{outline:none;border-color:var(--g2)}
 .tp select{flex:1;min-width:0;font:inherit;font-size:22px;font-weight:600;border:0;background:none;color:var(--ink);text-align:center;text-align-last:center;-webkit-appearance:none;appearance:none;padding:8px 0;font-variant-numeric:tabular-nums}
 .tp span{font-size:22px;font-weight:700}
 .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
-.refresh{flex:none;min-height:44px;padding:0 14px;border:1.5px solid #f1dc94;border-radius:999px;background:#fff6d6;color:#8a6a12;font:inherit;font-size:15px;font-weight:600;cursor:pointer;margin-top:4px}
+.refresh{flex:none;min-height:44px;padding:0 14px;border:1.5px solid #f1dc94;border-radius:999px;background:#fff6d6;color:#8a6a12;font:inherit;font-size:15px;font-weight:600;cursor:pointer;margin-top:4px;display:inline-flex;align-items:center;gap:6px;transition:transform .12s,background .12s;-webkit-tap-highlight-color:transparent}
+.refresh svg{width:17px;height:17px}
+.refresh:active{transform:scale(.92);background:#fbe9a6}
+.refresh.busy{opacity:.75}
+.refresh.busy svg{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 .next{gap:10px}
 .next .lbl{font-size:16px;color:rgba(255,255,255,.85)}
 .next .bigdate{font-size:30px;font-weight:700;line-height:1.2}
@@ -94,7 +99,7 @@ input:focus{outline:none;border-color:var(--g2)}
 <div class="app">
   <header class="top">
     <div><h1>提醒吃药•通用版</h1><div class="sub" id="today"></div></div>
-    <button class="refresh" id="refreshBtn" aria-label="刷新">↻ 刷新</button>
+    <button class="refresh" id="refreshBtn" aria-label="刷新"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 4v5h-5"/></svg>刷新</button>
   </header>
 
   <!-- 设置 -->
@@ -148,7 +153,8 @@ input:focus{outline:none;border-color:var(--g2)}
         <summary>怎么清空日历里的吃药提醒</summary>
         <ol class="steps">
           <li>谷歌日历：点开任意一条“吃药：…” → 删除（垃圾桶或 ⋮ 菜单）→ 选“所有活动”（如果存成了任务，就选“所有任务”）。</li>
-          <li>每个时间点是单独一组，比如 08:00 和 20:00，要各删一次；没有一键全清。</li>
+          <li>选“所有活动”再点删除，这一组以后所有日子的提醒一次全删掉，不用一天天删。</li>
+          <li>一天吃几次的话，每个时间点是单独一组（比如 08:00 和 20:00），每组各删一次。</li>
           <li>苹果日历：点开那条日程 → 删除日程 → “删除所有将来日程”。</li>
           <li>删完后点本页的“清除已设置标记”。</li>
         </ol>
@@ -438,7 +444,7 @@ input:focus{outline:none;border-color:var(--g2)}
   };
 
   /* ---------- 其他 ---------- */
-  $('refreshBtn').onclick=function(){location.reload();};
+  $('refreshBtn').onclick=function(){var b=this;if(b.classList.contains('busy'))return;b.classList.add('busy');try{if(navigator.vibrate)navigator.vibrate(15);}catch(e){}setTimeout(function(){location.reload();},700);};
   $('resetBtn').onclick=function(){$('resetBox').classList.remove('hide');$('resetBtn').classList.add('hide');};
   $('resetNo').onclick=function(){$('resetBox').classList.add('hide');$('resetBtn').classList.remove('hide');};
   $('resetYes').onclick=function(){
